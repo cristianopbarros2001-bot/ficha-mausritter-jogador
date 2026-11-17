@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha Interativa - Mausritter</title>
+  <style>
+    :root {
+      --bg-paper: #f6f3eb;
+      --ink: #1e1d1b;
+      --border: #1e1d1b;
+      --accent: #b83b2b;
+      --slot-bg: #fffdf8;
+      --slot-used: #e8e2d5;
+    }
+
+    * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+
+    body {
+      background-color: #2b2927;
+      color: var(--ink);
+      margin: 0;
+      padding: 20px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .sheet {
+      background-color: var(--bg-paper);
+      width: 100%;
+      max-width: 850px;
+      padding: 24px;
+      border: 3px solid var(--border);
+      box-shadow: 8px 8px 0px #111;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      background: var(--ink);
+      color: var(--bg-paper);
+      border: 2px solid var(--ink);
+      padding: 6px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: 0.1s;
+    }
+
+    button:hover { background: var(--accent); border-color: var(--accent); }
+    button.secondary { background: transparent; color: var(--ink); }
+    button.secondary:hover { background: var(--slot-used); }
+
+    .dice-log {
+      background: var(--ink);
+      color: #fff;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 42px;
+    }
+
+    .grid-top {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 650px) {
+      .grid-top { grid-template-columns: 1fr; }
+    }
+
+    .box {
+      border: 2px solid var(--border);
+      padding: 12px;
+      background: var(--slot-bg);
+    }
+
+    .box-title {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .field-row label { font-weight: bold; font-size: 0.85rem; min-width: 85px; }
+
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      background: transparent;
+      font-size: 0.95rem;
+      padding: 2px 4px;
+      color: var(--ink);
+    }
+
+    input:focus, textarea:focus { outline: none; background: #fff8dc; }
+
+    /* Atributos */
+    .stats-table { width: 100%; border-collapse: collapse; }
+    .stats-table th, .stats-table td {
+      border: 1px solid var(--border);
+      padding: 6px;
+      text-align: center;
+    }
+    .stats-table input {
+      width: 45px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+      border-bottom: none;
+    }
+
+    .roll-btn {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Inventário 2x5 */
+    .inventory-section { margin-top: 16px; }
+
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    @media (max-width: 700px) {
+      .inventory-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .inv-slot {
+      border: 2px solid var(--border);
+      background: var(--slot-bg);
+      padding: 8px;
+      min-height: 115px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .inv-slot.occupied { background: var(--slot-used); }
+
+    .slot-header {
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inv-slot textarea {
+      resize: none;
+      height: 55px;
+      font-size: 0.85rem;
+      border: none;
+      margin-top: 4px;
+      font-weight: bold;
+    }
+
+    .usage-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .dot.filled { background: var(--accent); }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 650px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sheet">
+  <header>
+    <h1>MAUSRITTER</h1>
+    <div class="toolbar">
+      <button onclick="rollDice(20, 'd20 Livre')">Rolar d20</button>
+      <button onclick="rollDice(6, 'd6 Dano/Uso')">Rolar d6</button>
+      <button class="secondary" onclick="exportData()">Exportar JSON</button>
+      <button class="secondary" onclick="document.getElementById('importFile').click()">Importar</button>
+      <button class="secondary" onclick="resetSheet()">Limpar</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+    </div>
+  </header>
+
+  <div class="dice-log" id="diceLog">
+    <span>Pronto para rolar. Clique em "Testar" nos atributos ou nos botões acima.</span>
+  </div>
+
+  <div class="grid-top">
+    <!-- Identidade -->
+    <div class="box">
+      <div class="box-title">Identidade do Rato</div>
+      <div class="field-row">
+        <label>Nome:</label>
+        <input type="text" id="name" placeholder="Ex: Pip, Bramble...">
+      </div>
+      <div class="field-row">
+        <label>Origem:</label>
+        <input type="text" id="background" placeholder="Ex: Cozinheiro, Ferreiro...">
+      </div>
+      <div class="field-row">
+        <label>Pelagem:</label>
+        <input type="text" id="coat" placeholder="Cor e padrão">
+      </div>
+      <div class="field-row">
+        <label>Sinal:</label>
+        <input type="text" id="sign" placeholder="Signo / Traço marcante">
+      </div>
+      <div class="field-row">
+        <label>Nível / XP:</label>
+        <input type="number" id="level" value="1" style="width:50px">
+        <span>/</span>
+        <input type="number" id="xp" value="0" style="width:70px">
+        <span style="font-size:0.8rem">XP</span>
+      </div>
+    </div>
+
+    <!-- Atributos e Vida -->
+    <div class="box">
+      <div class="box-title">Atributos & Proteção</div>
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Atributo</th>
+            <th>Máx</th>
+            <th>Atual</th>
+            <th>Teste</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>FOR</strong></td>
+            <td><input type="number" id="strMax" value="10"></td>
+            <td><input type="number" id="strCur" value="10"></td>
+            <td><button class="roll-btn" onclick="saveRoll('FOR', 'strCur')">Testar</button></td>
+          </tr>
+          <tr>
+            <td><strong>DES</strong></td>
+            <td><input type="number" id="dexMax" value="10"></td>
+            <td><input type="number" id="dexCur" value="10"></td>
+            <td><button class="roll-btn" onclick="saveRoll('DES', 'dexCur')">Testar</button></td>
+          </tr>
+          <tr>
+            <td><strong>VON</strong></td>
+            <td><input type="number" id="wilMax" value="10"></td>
+            <td><input type="number" id="wilCur" value="10"></td>
+            <td><button class="roll-btn" onclick="saveRoll('VON', 'wilCur')">Testar</button></td>
+          </tr>
+          <tr>
+            <td><strong>PV</strong></td>
+            <td><input type="number" id="hpMax" value="4"></td>
+            <td><input type="number" id="hpCur" value="4"></td>
+            <td><span style="font-size:0.75rem">Proteção</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Inventário 10 slots -->
+  <div class="box inventory-section">
+    <div class="box-title">
+      <span>Inventário (10 Espaços — Itens Grandes ocupam 2+)</span>
+      <span>Sementes (Moedas): <input type="number" id="pips" value="0" style="width:65px; font-weight:bold;"></span>
+    </div>
+    <div class="inventory-grid" id="inventoryGrid"></div>
+  </div>
+
+  <!-- Notas e Banco -->
+  <div class="bottom-grid">
+    <div class="box">
+      <div class="box-title">Anotações, Feitiços & Condições</div>
+      <textarea id="notes" rows="5" placeholder="Efeitos de condições, detalhes de feitiços ou contatos..."></textarea>
+    </div>
+    <div class="box">
+      <div class="box-title">Banco & Itens Guardados no Assentamento</div>
+      <textarea id="bank" rows="5" placeholder="Sementes guardadas e equipamentos em depósito..."></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+  const slotLabels = [
+    "Pata Principal", "Pata Secundária", "Mochila 1", "Mochila 2", "Mochila 3",
+    "Corpo 1", "Corpo 2", "Mochila 4", "Mochila 5", "Mochila 6"
+  ];
+
+  const invGrid = document.getElementById('inventoryGrid');
+
+  // Renderiza os 10 slots do inventário
+  slotLabels.forEach((label, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'inv-slot';
+    slot.id = `slot-${index}`;
+    slot.innerHTML = `
+      <div class="slot-header">
+        <span>${label}</span>
+        <input type="checkbox" id="occ-${index}" title="Marcar como ocupado (ex: item de 2 espaços)" onchange="toggleOccupied(${index})">
+      </div>
+      <textarea id="item-${index}" placeholder="Item / Condição" oninput="autoCheckOccupied(${index})"></textarea>
+      <div class="usage-dots" title="Pontos de Uso">
+        <span style="font-size:0.7rem">Uso:</span>
+        <span class="dot" data-slot="${index}" data-dot="0" onclick="toggleDot(${index}, 0)"></span>
+        <span class="dot" data-slot="${index}" data-dot="1" onclick="toggleDot(${index}, 1)"></span>
+        <span class="dot" data-slot="${index}" data-dot="2" onclick="toggleDot(${index}, 2)"></span>
+      </div>
+    `;
+    invGrid.appendChild(slot);
+  });
+
+  // Funções de rolagem
+  function rollDice(sides, label) {
+    const res = Math.floor(Math.random() * sides) + 1;
+    document.getElementById('diceLog').innerHTML = `<span>🎲 <strong>${label}:</strong> Resultado <strong>${res}</strong> (1-${sides})</span>`;
+  }
+
+  function saveRoll(statName, inputId) {
+    const target = parseInt(document.getElementById(inputId).value) || 0;
+    const roll = Math.floor(Math.random() * 20) + 1;
+    const success = roll <= target;
+    const statusText = success
+      ? `<span style="color:#7bed9f">SUCESSO! (${roll} ≤ ${target})</span>`
+      : `<span style="color:#ff6b81">FALHA! (${roll} > ${target})</span>`;
+    document.getElementById('diceLog').innerHTML = `<span>🎲 Teste de <strong>${statName}</strong>: Rolou <strong>${roll}</strong> — ${statusText}</span>`;
+  }
+
+  // Controle visual do inventário
+  function toggleOccupied(idx) {
+    const slot = document.getElementById(`slot-${idx}`);
+    const isChecked = document.getElementById(`occ-${idx}`).checked;
+    slot.classList.toggle('occupied', isChecked);
+    saveState();
+  }
+
+  function autoCheckOccupied(idx) {
+    const text = document.getElementById(`item-${idx}`).value.trim();
+    const cb = document.getElementById(`occ-${idx}`);
+    cb.checked = text.length > 0;
+    toggleOccupied(idx);
+  }
+
+  function toggleDot(slotIdx, dotIdx) {
+    const dot = document.querySelector(`.dot[data-slot="${slotIdx}"][data-dot="${dotIdx}"]`);
+    dot.classList.toggle('filled');
+    saveState();
+  }
+
+  // Salvamento automático no navegador
+  function saveState() {
+    const data = {};
+    document.querySelectorAll('input, textarea').forEach(el => {
+      if (el.id && el.type !== 'file') {
+        data[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+      }
+    });
+    data.dots = [];
+    document.querySelectorAll('.dot.filled').forEach(d => {
+      data.dots.push(`${d.dataset.slot}-${d.dataset.dot}`);
+    });
+    localStorage.setItem('mausritter_sheet_v1', JSON.stringify(data));
+  }
+
+  function loadState(customData = null) {
+    const raw = customData || localStorage.getItem('mausritter_sheet_v1');
+    if (!raw) return;
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+    Object.keys(data).forEach(id => {
+      if (id === 'dots') return;
+      const el = document.getElementById(id);
+      if (el) {
+        if (el.type === 'checkbox') {
+          el.checked = data[id];
+          if (id.startsWith('occ-')) {
+            const idx = id.split('-')[1];
+            document.getElementById(`slot-${idx}`).classList.toggle('occupied', data[id]);
+          }
+        } else {
+          el.value = data[id];
+        }
+      }
+    });
+
+    document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
+    if (data.dots) {
+      data.dots.forEach(pair => {
+        const [s, d] = pair.split('-');
+        const dotEl = document.querySelector(`.dot[data-slot="${s}"][data-dot="${d}"]`);
+        if (dotEl) dotEl.classList.add('filled');
+      });
+    }
+  }
+
+  function exportData() {
+    saveState();
+    const data = localStorage.getItem('mausritter_sheet_v1');
+    const name = document.getElementById('name').value.trim() || 'rato';
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mausritter_${name.toLowerCase()}.json`;
+    a.click();
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      loadState(e.target.result);
+      saveState();
+    };
+    reader.readAsText(file);
+  }
+
+  function resetSheet() {
+    if (confirm('Apagar todos os dados desta ficha?')) {
+      localStorage.removeItem('mausritter_sheet_v1');
+      location.reload();
+    }
+  }
+
+  document.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', saveState);
+  });
+
+  window.onload = () => loadState();
+</script>
+</body>
+</html>
